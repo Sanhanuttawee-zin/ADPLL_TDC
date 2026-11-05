@@ -1,0 +1,230 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Inverter vs Ring TDC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control column on the left, two waveform stacks and three charts on the right, all sharing one time axis (x 64..520 of a 640 box). */
+:root{--bg:#0d1218;--panel:#131a22;--line:#26323f;--fg:#e8edf3;--mut:#9aa7b7;--chain:#58a6ff;--ring:#f0c14b;--top:#ff6b6b;--bot:#4cd18a;--cur:#ffffff;--grid:#2b3745;--chip:#1b2530;--btn:#58a6ff;--btnfg:#0d1218;color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f3f5f8;--panel:#ffffff;--line:#d3dae3;--fg:#16202b;--mut:#546274;--chain:#1565c9;--ring:#9a6a00;--top:#cc2b2b;--bot:#14804a;--cur:#16202b;--grid:#cfd7e1;--chip:#e7ecf2;--btn:#1565c9;--btnfg:#ffffff;color-scheme:light}}
+:root[data-theme="light"]{--bg:#f3f5f8;--panel:#ffffff;--line:#d3dae3;--fg:#16202b;--mut:#546274;--chain:#1565c9;--ring:#9a6a00;--top:#cc2b2b;--bot:#14804a;--cur:#16202b;--grid:#cfd7e1;--chip:#e7ecf2;--btn:#1565c9;--btnfg:#ffffff;color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.7 "IBM Plex Sans Thai",system-ui,sans-serif;padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.layout{display:flex;gap:32px;max-width:1280px;margin:0 auto;align-items:flex-start}
+.side{flex:0 0 330px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;gap:26px}
+@media (max-width:900px){.layout{flex-direction:column;gap:20px;align-items:stretch}.side{position:static;flex:none;width:100%;max-height:none;overflow:visible}}
+.kick{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+h1{font-size:25px;line-height:1.25;margin:0;text-wrap:balance}
+h2{font-size:19px;line-height:1.35;margin:0 0 6px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+p{margin:0 0 12px;max-width:68ch}
+.lead{font-size:16.5px;max-width:70ch}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--chip);color:var(--fg);padding:5px 11px;border-radius:7px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--btn);color:var(--btnfg);border-color:var(--btn)}
+button.go{background:var(--btn);color:var(--btnfg);border-color:var(--btn);font-weight:600;padding:7px 16px}
+button:focus-visible,input:focus-visible,.drag:focus-visible{outline:2px solid var(--btn);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.row label{grid-column:1/-1;font-size:13px;color:var(--mut)}
+.row .in{display:flex;gap:8px;align-items:center;grid-column:1/-1}
+.row input[type=range]{flex:1;min-width:0;accent-color:var(--btn)}
+input[type=number]{width:84px;font:13px "IBM Plex Mono",monospace;background:var(--chip);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+#ctl{display:flex;flex-direction:column;gap:9px}
+.pre{font-size:13px;color:var(--mut)}
+.legend{font-size:12.5px;color:var(--mut);display:flex;flex-direction:column;gap:3px;line-height:1.5}
+.legend i{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:7px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 8px 6px}
+.scroll{overflow-x:auto}
+.scroll svg{display:block;width:100%;min-width:580px;height:auto}
+.drag{touch-action:pan-y;cursor:ew-resize}
+svg text{font-family:"IBM Plex Mono",monospace;font-size:13px;fill:var(--fg)}
+svg .mut{fill:var(--mut);font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left;color:var(--mut)}
+th{font-weight:600}
+td.n{font-family:"IBM Plex Mono",monospace}
+.box{border:1px solid var(--line);border-left:3px solid var(--ring);background:var(--panel);border-radius:8px;padding:14px 16px}
+.cap{font-size:13.5px;color:var(--mut);margin:6px 2px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+</style>
+
+<div class="layout">
+<aside class="side">
+ <div class="kick">ADPLL · TDC</div>
+ <h1 id="ttl"></h1>
+ <div class="chips"><button id="bth" aria-pressed="true">ไทย</button><button id="ben" aria-pressed="false">EN</button><button id="play" class="go"></button></div>
+ <div class="row"><label id="spl" for="spr"></label><div class="in"><input id="spr" type="range" min="0.25" max="3" step="0.05" value="1"><input id="spn" type="number" min="0.25" max="3" step="0.05" value="1"><span>x</span></div></div>
+ <div id="ctl"></div>
+ <div><div class="pre" id="prel"></div><div class="chips" id="pre"></div></div>
+ <div class="legend" id="leg"></div>
+</aside>
+<main class="main">
+ <p class="lead" id="lead"></p>
+ <section><h2 id="h1"></h2><p id="t1"></p><div class="card"><div class="scroll drag" id="wCw" tabindex="0"></div></div></section>
+ <section><h2 id="h2"></h2><p id="t2"></p><div class="card"><div class="scroll drag" id="wRw" tabindex="0"></div></div></section>
+ <section><h2 id="h3"></h2><p id="t3"></p><div class="card"><div id="tbl" class="scroll"></div></div></section>
+ <section><h3 id="c1h"></h3><div class="card"><div class="scroll drag" id="c1" tabindex="0"></div></div><p class="cap" id="c1c"></p></section>
+ <section><h3 id="c2h"></h3><div class="card"><div class="scroll drag" id="c2" tabindex="0"></div></div><p class="cap" id="c2c"></p></section>
+ <section><h3 id="c3h"></h3><div class="card"><div class="scroll drag" id="c3" tabindex="0"></div></div><p class="cap" id="c3c"></p></section>
+ <section class="box" id="sum"></section>
+</main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let LANG='th';try{LANG=localStorage.getItem('tdc2-lang')||'th'}catch(e){}
+const T=(a,b)=>LANG==='th'?a:b;
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),lerp=(a,b,t)=>a+(b-a)*t,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,tri=p=>1-Math.abs(2*p-1);
+const S={ts:120,tmax:400,T0:73.74,drift:0,A:0,Tm:120,d:7.4,mm:0};
+const R=[0,.6,-.8,.3,-.5,.9,-.4,.7];
+const DEF=[
+ {k:'ts',th:'เวลา timestamp ts (ns)',en:'Timestamp ts (ns)',min:0,max:()=>S.tmax,step:.1},
+ {k:'tmax',th:'ช่วง sweep สูงสุด (ns)',en:'Sweep range (ns)',min:100,max:1000,step:10},
+ {k:'T0',th:'คาบ CKV ที่เวลา 0, T (ns)',en:'CKV period at t = 0, T (ns)',min:40,max:120,step:.01},
+ {k:'drift',th:'T เปลี่ยนตลอดช่วง (ns)',en:'T change over the sweep (ns)',min:-30,max:30,step:.1},
+ {k:'A',th:'T แกว่ง ± (ns)',en:'T wobble ± (ns)',min:0,max:15,step:.1},
+ {k:'Tm',th:'คาบการแกว่งของ T (ns)',en:'Wobble period (ns)',min:40,max:400,step:1},
+ {k:'d',th:'ตัวหน่วง inverter, t_inv (ns)',en:'Inverter delay t_inv (ns)',min:3,max:14,step:.05},
+ {k:'mm',th:'เฟสของ ring เยื้อง (% ของระยะ tap)',en:'Ring phase mismatch (% of spacing)',min:0,max:60,step:1}];
+const PRE=[
+ {th:'T คงที่',en:'T constant',to:{drift:0,A:0}},
+ {th:'T ไหล +15 ns',en:'T drifts +15 ns',to:{drift:15,A:0}},
+ {th:'T แกว่ง ±6 ns',en:'T wobbles ±6 ns',to:{drift:0,A:6,Tm:120}},
+ {th:'t_inv = 7.4 ns',en:'t_inv = 7.4 ns',to:{d:7.4}},
+ {th:'t_inv = T ÷ 8',en:'t_inv = T ÷ 8',to:()=>({d:S.T0/8})},
+ {th:'ring เยื้อง 30%',en:'Ring mismatch 30%',to:{mm:30}},
+ {th:'ring ไม่เยื้อง',en:'Ring matched',to:{mm:0}}];
+
+/* ---------- model ---------- */
+let PH={key:'',h:.1,a:null};
+function Tat(t){return Math.max(20,S.T0+S.drift*clamp(t/S.tmax,0,1)+S.A*Math.sin(6.283185307*t/S.Tm))}
+function ensure(){const key=[S.tmax,S.T0,S.drift,S.A,S.Tm].join('|');if(key===PH.key)return;PH.key=key;const n=Math.ceil(S.tmax/PH.h)+3,a=new Float64Array(n);for(let i=1;i<n;i++)a[i]=a[i-1]+PH.h/Tat((i-.5)*PH.h);PH.a=a}
+function phi(t){if(t<=0)return t/Tat(0);const a=PH.a,f=t/PH.h,i=Math.floor(f);if(i>=a.length-1)return a[a.length-1]+(t-(a.length-1)*PH.h)/Tat(t);return a[i]+(a[i+1]-a[i])*(f-i)}
+function tInv(x){if(x<=0)return x*Tat(0);const a=PH.a;let lo=0,hi=a.length-1;if(x>=a[hi])return hi*PH.h+(x-a[hi])*Tat(hi*PH.h);while(hi-lo>1){const m=(lo+hi)>>1;if(a[m]<=x)lo=m;else hi=m}return(lo+(x-a[lo])/(a[hi]-a[lo]))*PH.h}
+const lv=x=>(x+1e-9-Math.floor(x+1e-9))<.5?1:0;
+const off=k=>S.mm/100/8*R[k];
+function bits(m,t){const q=[];for(let k=0;k<8;k++)q.push(m===0?lv(phi(t-k*S.d)):lv(phi(t)-k/8-off(k)));return q}
+function outs(q){let rise=-1,fall=-1,p=q[7];for(let k=0;k<8;k++){if(!p&&q[k]&&rise<0)rise=k;if(p&&!q[k]&&fall<0)fall=k;p=q[k]}
+ const rf=rise>=0,ff=fall>=0,r=rf?rise:0,f=ff?fall:8;
+ const top=r>f?r-f:f-r,fwd=r>=f?r-f:8+r-f,bwd=8-fwd;return{r,f,rf,ff,top,fwd,bwd,bot:Math.min(fwd,bwd)}}
+
+/* ---------- geometry shared by all panels ---------- */
+const X0=64,X1=520,xs=t=>X0+t/S.tmax*(X1-X0);
+function tickStep(){return S.tmax<=200?25:S.tmax<=500?50:100}
+function axisT(y){let s=`<line x1="${X0}" x2="${X1}" y1="${y}" y2="${y}" style="stroke:var(--grid);stroke-width:1.5"/>`;const st=tickStep();for(let t=0;t<=S.tmax+1e-6;t+=st){const x=xs(t);s+=`<line x1="${x}" x2="${x}" y1="${y}" y2="${y+5}" style="stroke:var(--mut)"/><text class="mut" x="${x}" y="${y+20}" text-anchor="middle">${t}</text>`}return s+`<text class="mut" x="${X1+18}" y="${y+20}">ns</text>`}
+const yh=v=>132-v*15;
+
+/* ---------- sampled curves over the whole sweep (cached) ---------- */
+let CV={key:''};
+function curves(){ensure();const key=[PH.key,S.d,S.mm].join('|');if(CV.key===key)return CV;
+ const n=Math.round(S.tmax/.5)+1,tt=[],tp=[[],[]],bt=[[],[]],cov=[],diff=[0,0];
+ for(let i=0;i<n;i++){const t=i*.5;tt.push(t);for(let m=0;m<2;m++){const o=outs(bits(m,t));tp[m].push(o.top);bt[m].push(o.bot);if(o.top!==o.bot)diff[m]++}cov.push(clamp(800*S.d/Tat(t),0,120))}
+ const pl=(a,f)=>a.map((v,i)=>xs(tt[i]).toFixed(1)+','+f(v).toFixed(1)).join(' ');
+ const half=m=>{let sh='',i=0;while(i<n){if(tp[m][i]!==bt[m][i]){let j=i;while(j+1<n&&tp[m][j+1]!==bt[m][j+1])j++;const xa=xs(tt[i]-.25),xb=xs(tt[j]+.25);sh+=`<rect x="${xa.toFixed(1)}" y="12" width="${Math.max(1,xb-xa).toFixed(1)}" height="120" style="fill:var(--top);opacity:.16"/>`;i=j+1}else i++}
+  return sh+`<polyline points="${pl(tp[m],yh)}" style="fill:none;stroke:var(--top);stroke-width:6;stroke-linejoin:round"/><polyline points="${pl(bt[m],yh)}" style="fill:none;stroke:var(--bot);stroke-width:2.5;stroke-linejoin:round"/>`};
+ const yc=v=>132-v;
+ CV={key,n,diff,frac:[diff[0]/n,diff[1]/n],half:[half(0),half(1)],
+  cov:`<line x1="${X0}" x2="${X1}" y1="${yc(100)}" y2="${yc(100)}" style="stroke:var(--mut);stroke-dasharray:5 4"/><polyline points="${pl(cov,yc)}" style="fill:none;stroke:var(--chain);stroke-width:3"/><line x1="${X0}" x2="${X1}" y1="${yc(100)}" y2="${yc(100)}" style="stroke:var(--ring);stroke-width:3;stroke-dasharray:14 6"/>`};
+ return CV}
+
+/* ---------- drawing ---------- */
+function edgeTimes(m,k){const out=[],sh=m===0?k*S.d:0,nMax=Math.ceil(2*phi(S.tmax)+4),nMin=m===0?-Math.ceil(2*sh/20)-3:-6;
+ for(let n=nMin;n<=nMax;n++){const t=m===0?sh+tInv(n/2):tInv(n/2+k/8+off(k));if(t>0&&t<S.tmax)out.push(t)}return out.sort((a,b)=>a-b)}
+function wave(m){
+ const col=m?'var(--ring)':'var(--chain)',W=640,H=270,cy=k=>34+24*k,Y=(k,l)=>cy(k)+(l?-8:8);
+ const xc=xs(S.ts),q=bits(m,S.ts),o=outs(q);
+ let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m?'ring oscillator':'inverter chain'}"><defs><clipPath id="cb${m}"><rect x="0" y="0" width="${xc.toFixed(1)}" height="${H}"/></clipPath><clipPath id="ca${m}"><rect x="${xc.toFixed(1)}" y="0" width="${W}" height="${H}"/></clipPath></defs>`;
+ const rises=[];for(let i=0;;i++){const t=tInv(i);if(t>=S.tmax)break;rises.push(t)}rises.push(S.tmax);
+ rises.forEach((t,i)=>{if(i<rises.length-1)s+=`<line x1="${xs(t)}" x2="${xs(t)}" y1="24" y2="222" style="stroke:var(--grid);stroke-dasharray:2 4"/>`;
+  if(i<rises.length-1){const w=xs(rises[i+1])-xs(t);if(w>=20)s+=`<text class="mut" x="${xs(t)+w/2}" y="16" text-anchor="middle">${i+1}</text>`}});
+ for(let k=0;k<8;k++){
+  s+=`<text x="6" y="${cy(k)+5}">${k}</text>`;
+  if(k>0)s+=`<rect x="22" y="${cy(k)-9}" width="32" height="18" rx="3" style="fill:var(--bg);stroke:var(--mut)"/><text class="mut" x="38" y="${cy(k)+4}" text-anchor="middle">${m?k+'/8':'Δ'}</text>`;
+  const ev=edgeTimes(m,k),l0=m===0?lv(phi(-k*S.d)):lv(phi(0)-k/8-off(k));let l=l0,d=`M${X0} ${Y(k,l)}`;
+  for(const t of ev){l=1-l;d+=`H${xs(t).toFixed(1)}V${Y(k,l)}`}d+=`H${X1}`;
+  s+=`<path d="${d}" clip-path="url(#cb${m})" style="fill:none;stroke:${col};stroke-width:2.4;stroke-linejoin:round"/><path d="${d}" clip-path="url(#ca${m})" style="fill:none;stroke:${col};stroke-width:2.4;stroke-linejoin:round;opacity:.28"/>`;
+  s+=`<circle cx="${xc}" cy="${Y(k,q[k])}" r="4.5" style="fill:${col};stroke:var(--bg);stroke-width:1.5"/>`;
+  s+=`<circle cx="546" cy="${cy(k)}" r="7" style="fill:${col};fill-opacity:${q[k]?1:.14};stroke:${col}"/>`}
+ s+=axisT(222);
+ s+=`<line x1="${xc}" x2="${xc}" y1="22" y2="222" style="stroke:var(--cur);stroke-width:2"/>`;
+ const anc=xc>X1-70?'end':'start',lx=anc==='end'?xc-6:xc+6;
+ s+=`<text x="${lx}" y="262" text-anchor="${anc}">ts = ${S.ts.toFixed(1)} ns</text>`;
+ if(o.ff)s+=`<text x="572" y="${cy(o.f)+5}" style="font-weight:600">f</text>`;
+ if(o.rf)s+=`<text x="572" y="${cy(o.r)+5}" style="font-weight:600">r</text>`;
+ if(o.ff&&o.rf){const a=cy(o.r),b=cy(o.f);s+=`<path d="M586 ${a}H592V${b}H586" style="fill:none;stroke:var(--top);stroke-width:2.5"/><text x="602" y="${(a+b)/2+6}" style="fill:var(--top);font-size:17px;font-weight:600">${o.top}</text>`}
+ return s+'</svg>'}
+function gridY(vals,f,lab){return vals.map(v=>`<line x1="${X0}" x2="${X1}" y1="${f(v)}" y2="${f(v)}" style="stroke:var(--grid);stroke-dasharray:3 4"/><text class="mut" x="56" y="${f(v)+4}" text-anchor="end">${lab(v)}</text>`).join('')}
+function chartHalf(m){const c=curves(),q=bits(m,S.ts),o=outs(q),xc=xs(S.ts);
+ return `<svg viewBox="0 0 640 170" role="img">${gridY([0,4,8],yh,v=>v)}${c.half[m]}${axisT(140)}<line x1="${xc}" x2="${xc}" y1="12" y2="132" style="stroke:var(--cur);stroke-width:2"/><circle cx="${xc}" cy="${yh(o.top)}" r="6.5" style="fill:var(--top);stroke:var(--bg);stroke-width:1.5"/><circle cx="${xc}" cy="${yh(o.bot)}" r="4" style="fill:var(--bot);stroke:var(--bg);stroke-width:1.5"/><text x="532" y="50" style="fill:var(--top)">${T('บน','top')} ${o.top}</text><text x="532" y="74" style="fill:var(--bot)">${T('ล่าง','bottom')} ${o.bot}</text></svg>`}
+function chartCov(){const c=curves(),xc=xs(S.ts),cv=clamp(800*S.d/Tat(S.ts),0,120),yc=v=>132-v;
+ return `<svg viewBox="0 0 640 170" role="img">${gridY([0,50,100],yc,v=>v+'%')}${c.cov}${axisT(140)}<line x1="${xc}" x2="${xc}" y1="12" y2="132" style="stroke:var(--cur);stroke-width:2"/><circle cx="${xc}" cy="${yc(cv)}" r="5.5" style="fill:var(--chain);stroke:var(--bg);stroke-width:1.5"/><text x="532" y="50" style="fill:var(--chain)">${T('chain','chain')} ${cv.toFixed(0)}%</text><text x="532" y="74" style="fill:var(--ring)">ring 100%</text></svg>`}
+function table(){const Tn=Tat(S.ts),dr=S.ts-tInv(phi(S.ts)-1/8),d7=S.ts-tInv(phi(S.ts)-7/8),c=curves(),oc=outs(bits(0,S.ts)),or=outs(bits(1,S.ts));
+ const f=v=>v.toFixed(2);
+ return `<table><thead><tr><th>ts = ${S.ts.toFixed(1)} ns · T = ${f(Tn)} ns</th><th><span class="dot" style="background:var(--chain)"></span>${T('inverter chain','inverter chain')}</th><th><span class="dot" style="background:var(--ring)"></span>ring oscillator</th></tr></thead><tbody>
+<tr><td>${T('delay ระหว่าง tap ติดกัน (ns)','Delay between adjacent taps (ns)')}</td><td class="n">${f(S.d)}</td><td class="n">${f(dr)}</td></tr>
+<tr><td>${T('delay tap 0 → tap 7 (ns)','Delay tap 0 → tap 7 (ns)')}</td><td class="n">${f(7*S.d)}</td><td class="n">${f(d7)}</td></tr>
+<tr><td>${T('หน้าต่าง 8 tap ÷ คาบ','8-tap window ÷ period')}</td><td class="n">${(800*S.d/Tn).toFixed(0)}%</td><td class="n">${(800*dr/Tn).toFixed(0)}%</td></tr>
+<tr><td>f, r (tfall, trise)</td><td class="n">${oc.ff?oc.f:'–'}, ${oc.rf?oc.r:'–'}</td><td class="n">${or.ff?or.f:'–'}, ${or.rf?or.r:'–'}</td></tr>
+<tr><td>${T('โค้ดด้านบน |r − f|','Top code |r − f|')}</td><td class="n" style="color:var(--top)">${oc.top}</td><td class="n" style="color:var(--top)">${or.top}</td></tr>
+<tr><td>${T('โค้ดด้านล่าง min(fwd, bwd)','Bottom code min(fwd, bwd)')}</td><td class="n" style="color:var(--bot)">${oc.bot}</td><td class="n" style="color:var(--bot)">${or.bot}</td></tr>
+<tr><td>${T('ทุก timestamp ใน 0…'+S.tmax+' ns ที่สองโค้ดต่างกัน','Timestamps in 0…'+S.tmax+' ns where the codes differ')}</td><td class="n">${(c.frac[0]*100).toFixed(0)}%</td><td class="n">${(c.frac[1]*100).toFixed(0)}%</td></tr></tbody></table>`}
+function draw(){ensure();$('wCw').innerHTML=wave(0);$('wRw').innerHTML=wave(1);$('tbl').innerHTML=table();$('c1').innerHTML=chartHalf(0);$('c2').innerHTML=chartHalf(1);$('c3').innerHTML=chartCov()}
+
+/* ---------- text ---------- */
+function renderText(){
+ document.documentElement.lang=LANG;
+ $('ttl').textContent=T('Delay ของ TDC: inverter vs ring','TDC delay: inverter vs ring');
+ $('play').textContent=playing?T('หยุด','Pause'):T('เล่น sweep','Play sweep');
+ $('spl').textContent=T('ความเร็วแอนิเมชัน','Animation speed');
+ $('prel').textContent=T('ตั้งค่าเร็ว','Presets');
+ $('pre').innerHTML=PRE.map((p,i)=>`<button type="button" data-i="${i}">${T(p.th,p.en)}</button>`).join('');
+ $('leg').innerHTML=`<div><i style="border-color:var(--chain)"></i>${T('inverter chain (ดีเลย์คงที่)','inverter chain (constant delay)')}</div><div><i style="border-color:var(--ring)"></i>${T('ring oscillator 8 เฟส (ดีเลย์ = T ÷ 8)','8-phase ring oscillator (delay = T ÷ 8)')}</div><div><i style="border-color:var(--top)"></i>${T('โค้ดด้านบน |trise − tfall|','top code |trise − tfall|')}</div><div><i style="border-color:var(--bot)"></i>${T('โค้ดด้านล่าง (วงกลม)','bottom code (circular)')}</div><div><i style="border-color:var(--cur)"></i>${T('เส้น timestamp ts ลากได้','timestamp ts, draggable')}</div><div>${T('Δ = t_inv · k/8 = เฟสเป็นเศษของคาบ · วงกลมสว่าง = ค่าที่จับได้เป็น 1 · เส้นหลังเคอร์เซอร์จางลง','Δ = t_inv · k/8 = phase as a fraction of the period · bright circle = captured 1 · the waveform after the cursor is faded')}</div>`;
+ $('lead').textContent=T('เปรียบเทียบสองวิธีสร้าง 8 เฟสให้ TDC โดยใช้ CKV ตัวเดียวกัน (duty 50% เสมอ) ถูกสุ่มด้วย FREF ที่เวลา ts แบบ inverter chain ระยะห่างระหว่าง tap เป็นเวลาคงที่ t_inv ส่วน ring oscillator ระยะห่างคือ T ÷ 8 ซึ่งเปลี่ยนตาม T ลาก ts จาก 0 ไปจนถึงเวลาที่ต้องการ แล้วดูว่าโค้ดสองแบบของ half_per ให้ค่าอะไรในแต่ละช่วงเวลา','Two ways to make the 8 phases of a TDC from the same CKV (always 50% duty), sampled by FREF at time ts. In the inverter chain the spacing between taps is a fixed time t_inv. In the ring oscillator the spacing is T ÷ 8 and moves with T. Drag ts from 0 up to the time you want and watch what the two half_per codes return at every moment.');
+ $('h1').textContent=T('1. Inverter chain: ดีเลย์คงที่','1. Inverter chain: constant delay');
+ $('t1').textContent=T('tap k คือ CKV ที่ถูกหน่วง k × t_inv ไม่ว่า T จะเป็นเท่าไร ตัวหน่วงยังเท่าเดิม หน้าต่าง 8 tap จึงยาว 8 × t_inv ns คงที่ เมื่อ T เปลี่ยน สัดส่วนที่หน้าต่างครอบคลุมของคาบก็เปลี่ยนตาม','Tap k is CKV delayed by k × t_inv. The cells do not care what T is, so the 8-tap window is a fixed 8 × t_inv ns long. When T changes, the share of the period that the window covers changes with it.');
+ $('h2').textContent=T('2. Ring oscillator 8 เฟส: ดีเลย์ตามคาบ','2. 8-phase ring oscillator: delay follows the period');
+ $('t2').textContent=T('เฟส k ของ ring คือเฟสของออสซิลเลเตอร์เองที่ช้าลง k ÷ 8 คาบ ring ตัวนี้เป็นตัวสร้าง CKV จึงมี T ตัวเดียวกัน ระยะห่างระหว่างเฟสคือ T ÷ 8 เสมอ หน้าต่างจึงครอบคลุม 1 คาบพอดีทุกเวลา ถ้าเฟสไม่เยื้อง จะได้ 4 สูง 4 ต่ำตลอด ใช้สไลเดอร์ "เฟสของ ring เยื้อง" เพื่อใส่ความไม่ตรงกันของแต่ละเฟส','Phase k of the ring is the oscillator itself delayed by k ÷ 8 of a period. This ring is what makes CKV, so it has the same T. The spacing is always T ÷ 8, so the window covers exactly one period at every time. With no mismatch the sample is always 4 high and 4 low. Use the "ring phase mismatch" slider to add per-phase errors.');
+ $('h3').textContent=T('3. เทียบกันที่ timestamp ปัจจุบัน','3. Compared at the current timestamp');
+ $('t3').textContent=T('ตารางนี้อ่านจากเวลา ts ในเส้นสีขาวด้านบน ลากหรือกดเล่น sweep เพื่อดูว่าตัวเลขเปลี่ยนอย่างไร','The table reads the white timestamp line above. Drag it, or play the sweep, to see the numbers change.');
+ $('c1h').textContent=T('half_per ของ inverter chain ตลอดเวลา 0 → ts สูงสุด','half_per of the inverter chain over the whole sweep');
+ $('c1c').textContent=T('เส้นแดงหนาคือโค้ดด้านบน เส้นเขียวบางคือโค้ดด้านล่าง แถบแดงจางคือช่วงเวลาที่สองโค้ดไม่เท่ากัน (tap)','Thick red is the top code, thin green the bottom code, the pale red bands are the times when the two codes disagree (taps).');
+ $('c2h').textContent=T('half_per ของ ring oscillator ตลอดเวลา','half_per of the ring oscillator over the whole sweep');
+ $('c2c').textContent=T('ไม่มีแถบแดงเมื่อเฟสไม่เยื้อง ลองเพิ่มสไลเดอร์ "เฟสของ ring เยื้อง" แล้วดูว่าแถบกลับมา','No red band while the phases are matched. Raise the "ring phase mismatch" slider and the bands come back.');
+ $('c3h').textContent=T('หน้าต่าง 8 tap ครอบคลุมกี่ % ของคาบ','How much of the period the 8-tap window covers');
+ $('c3c').textContent=T('เส้นน้ำเงิน = 8 × t_inv ÷ T(t) เส้นทองประ = ring (100% เสมอ) เส้นประเทาคือ 1 คาบพอดี','Blue = 8 × t_inv ÷ T(t). Dashed gold = ring (always 100%). The grey dashed line marks exactly one period.');
+ $('sum').innerHTML=T(`<p><b>สรุป:</b> inverter chain ให้ delay คงที่ ถ้า 8 × t_inv ไม่เท่ากับ T หน้าต่างจะเห็นไม่ครบคาบหรือเกินคาบ ที่ T = 73.74 ns และ t_inv = 7.4 ns หน้าต่างครอบคลุม 80% จึงเห็น 5 สูงกับ 3 ต่ำในบางเฟส ring oscillator ให้ delay = T ÷ 8 ซึ่งตาม T ไปเอง หน้าต่างเท่ากับ 1 คาบเสมอ</p><p><b>ข้อจำกัด:</b> โมเดลใช้คลื่นสี่เหลี่ยมในอุดมคติ t_inv คงที่ ไม่มีผลของ PVT หรือ jitter ภายในตัวหน่วง รูปแบบเฟสเยื้องของ ring เป็นตัวอย่างตายตัว ไม่ได้วัดจากวงจรจริง ตารางแสดงสิ่งที่โค้ดคืนค่าออกมาตามจริง แม้ในช่วงที่หน้าต่างเกิน 1 คาบ โค้ดด้านล่างคืนค่าไม่เกิน 4 จึงไม่สามารถรายงาน half period จริง 4.98 tap ของ chain ได้เช่นกัน การแก้ที่ต้นเหตุคือให้ chain มีอย่างน้อย T ÷ t_inv tap</p>`,`<p><b>Summary:</b> The inverter chain gives a fixed delay. If 8 × t_inv differs from T, the window sees less or more than one period. At T = 73.74 ns and t_inv = 7.4 ns it covers 80%, so some phases show 5 high and 3 low. The ring oscillator gives a delay of T ÷ 8 that follows T by itself, so the window is always one period.</p><p><b>Limits:</b> The model uses ideal square waves and a constant t_inv, with no PVT or jitter inside the cells. The ring mismatch pattern is a fixed example, not measured from a circuit. The table shows what the code actually returns, including when the window exceeds one period. The bottom code returns at most 4, so it cannot report the chain’s true half period of 4.98 taps either. The root fix is a chain with at least T ÷ t_inv taps.</p>`);
+ mountCtl();draw()}
+
+/* ---------- controls ---------- */
+const dec=s=>s>=1?0:s>=.1?1:2;
+function mountCtl(){
+ $('ctl').innerHTML=DEF.map(c=>`<div class="row"><label for="r_${c.k}">${T(c.th,c.en)}</label><div class="in"><input id="r_${c.k}" data-k="${c.k}" type="range" min="${c.min}" max="${typeof c.max==='function'?c.max():c.max}" step="${c.step}"><input id="n_${c.k}" data-k="${c.k}" type="number" min="${c.min}" max="${typeof c.max==='function'?c.max():c.max}" step="${c.step}"></div></div>`).join('');syncCtl()}
+function syncCtl(){for(const c of DEF){const mx=typeof c.max==='function'?c.max():c.max,r=$('r_'+c.k),n=$('n_'+c.k);if(!r)return;r.max=mx;n.max=mx;if(document.activeElement!==r)r.value=S[c.k];if(document.activeElement!==n)n.value=(+S[c.k]).toFixed(c.k==='T0'?2:dec(c.step))}}
+$('ctl').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;const v=parseFloat(e.target.value);if(!isFinite(v))return;const c=DEF.find(x=>x.k===k);setPlaying(false);tw=null;S[k]=clamp(v,c.min,typeof c.max==='function'?c.max():c.max);if(k==='tmax')S.ts=Math.min(S.ts,S.tmax);dirty=true});
+$('pre').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const p=PRE[+b.dataset.i],to=typeof p.to==='function'?p.to():p.to,from={};for(const k in to)from[k]=S[k];tw={from,to,p:0}});
+
+/* ---------- animation driver ---------- */
+const DUR=18;let playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,speed=1,ph=0,auto0=0,blend=1,last=0,tw=null,dirty=true;
+function setPlaying(v){if(v&&!playing){auto0=S.ts;ph=0;blend=0}playing=v;$('play').textContent=playing?T('หยุด','Pause'):T('เล่น sweep','Play sweep')}
+$('play').addEventListener('click',()=>setPlaying(!playing));
+function setSpeed(v){if(!isFinite(v))return;speed=clamp(v,.25,3);$('spr').value=speed;if(document.activeElement!==$('spn'))$('spn').value=speed}
+$('spr').addEventListener('input',e=>setSpeed(+e.target.value));$('spn').addEventListener('input',e=>setSpeed(+e.target.value));
+function setLang(l){LANG=l;try{localStorage.setItem('tdc2-lang',l)}catch(e){}$('bth').setAttribute('aria-pressed',l==='th');$('ben').setAttribute('aria-pressed',l==='en');renderText()}
+$('bth').addEventListener('click',()=>setLang('th'));$('ben').addEventListener('click',()=>setLang('en'));
+['wCw','wRw','c1','c2','c3'].forEach(id=>{const el=$(id);let on=false;
+ const go=e=>{const sv=el.querySelector('svg');if(!sv)return;const r=sv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*640;setPlaying(false);S.ts=clamp((x-X0)/(X1-X0)*S.tmax,0,S.tmax);dirty=true};
+ el.addEventListener('pointerdown',e=>{on=true;try{el.setPointerCapture(e.pointerId)}catch(_){}go(e)});
+ el.addEventListener('pointermove',e=>{if(on)go(e)});el.addEventListener('pointerup',()=>on=false);el.addEventListener('pointercancel',()=>on=false);
+ el.addEventListener('keydown',e=>{const st=e.shiftKey?10:1;if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();setPlaying(false);S.ts=clamp(S.ts+(e.key==='ArrowRight'?st:-st),0,S.tmax);dirty=true}})});
+function frame(now){const dt=Math.min(.05,(now-last)/1000||0);last=now;
+ if(tw){tw.p+=dt*speed*1000/650;const e=ease(Math.min(1,tw.p));for(const k in tw.to)S[k]=lerp(tw.from[k],tw.to[k],e);if(tw.p>=1)tw=null;dirty=true}
+ if(playing){ph=(ph+dt*speed/DUR)%1;blend=Math.min(1,blend+dt*speed/.7);S.ts=lerp(auto0,S.tmax*tri(ph),ease(blend));dirty=true}
+ if(dirty){dirty=false;S.ts=clamp(S.ts,0,S.tmax);draw();syncCtl()}
+ requestAnimationFrame(frame)}
+setLang(LANG);setSpeed(1);requestAnimationFrame(frame);
+window.__cmp={S,bits,outs,curves,draw,setLang,setPlaying};
+</script>
+
+</body></html>
