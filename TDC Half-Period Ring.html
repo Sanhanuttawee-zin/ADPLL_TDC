@@ -1,0 +1,378 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>TDC Half-Period Ring</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: left column = picture + controls (sticky), right column = story */
+:root{--bg:#0e1420;--panel:#151d2b;--stage:#0b111b;--ink:#e9eef6;--muted:#a6b3c7;--line:#2b3a52;--blue:#5aa9ff;--orange:#ffb454;--purple:#d99bff;--red:#ff7a7a;--green:#5ee08a;--accent:#ffd166;color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f6fa;--panel:#ffffff;--stage:#ffffff;--ink:#142033;--muted:#4b5b73;--line:#cdd6e4;--blue:#1b63c4;--orange:#a85f00;--purple:#8032b8;--red:#c42b2b;--green:#14803f;--accent:#8a6100;color-scheme:light}}
+:root[data-theme="light"]{--bg:#f4f6fa;--panel:#ffffff;--stage:#ffffff;--ink:#142033;--muted:#4b5b73;--line:#cdd6e4;--blue:#1b63c4;--orange:#a85f00;--purple:#8032b8;--red:#c42b2b;--green:#14803f;--accent:#8a6100;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Thai","Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.7}
+.wrap{max-width:1280px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:32px;align-items:stretch}
+.colL{flex:1 1 56%;min-width:0;display:flex;flex-direction:column;gap:12px;align-self:flex-start}
+.colR{flex:1 1 44%;min-width:0;display:flex;flex-direction:column;gap:14px}
+
+.stagebox{align-self:stretch;background:var(--stage);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+svg.stg{display:block;width:100%;height:auto;touch-action:pan-y;outline:none}
+svg.stg:focus-visible{box-shadow:inset 0 0 0 3px var(--accent)}
+svg.stg text{font-family:"IBM Plex Sans Thai","Segoe UI",system-ui,sans-serif;font-size:20px}
+svg.stg .t{paint-order:stroke;stroke:var(--stage);stroke-width:4px;stroke-linejoin:round}
+.bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+button,.chip{font:inherit;font-size:15px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer;line-height:1.4}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.spd{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted)}
+.spd input[type=range]{width:130px}
+input[type=number]{width:74px;font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+input[type=range]{accent-color:var(--accent);min-width:0}
+#ctl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:minmax(0,13em) minmax(0,1fr) 78px;gap:10px;align-items:center;font-size:15px}
+.row label{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:15px;color:var(--muted)}
+.ro{display:block;font-size:15px;line-height:1.8;border-top:1px solid var(--line);padding-top:8px}
+.ro div{display:block}
+.o{color:var(--orange)}.p{color:var(--purple)}.rd{color:var(--red)}.gr{color:var(--green)}.bl{color:var(--blue)}
+#extra{font-size:14.5px;color:var(--muted);line-height:1.8;display:block}
+#extra .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#extra p{margin:0 0 6px}
+.hd{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.hd h1{font-size:25px;line-height:1.35;margin:0;font-weight:600;text-wrap:balance}
+.kick{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.langs{display:flex;gap:6px}
+#nar{animation:fade .28s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#nar p{margin:0 0 28px;line-height:1.95}
+#nar .k{font-weight:500}
+#nar .think{color:var(--accent);border-left:3px solid var(--accent);padding-left:12px}
+#nar .box{border:2px solid var(--accent);border-radius:10px;padding:12px 16px;font-weight:500}
+pre.eq{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:15px;line-height:1.7;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 0 28px;overflow-x:auto;white-space:pre}
+nav{margin-top:auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.dots{display:flex;gap:6px;margin-left:auto}
+.dots button{width:22px;height:22px;padding:0;border-radius:50%}
+.quiz{border-top:1px solid var(--line);padding-top:10px;display:block}
+.quiz .q{margin:0 0 14px}
+.quiz .q p{margin:0 0 6px;font-size:15px;line-height:1.6;color:var(--ink)}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:6px}
+.quiz .opts button{font-size:14px;text-align:left}
+.quiz .ok{border-color:var(--green);color:var(--green)}
+.quiz .no{border-color:var(--red);color:var(--red)}
+.quiz .fb{font-size:14px;color:var(--muted);margin-top:4px;display:block}
+@media (max-width:900px){
+ .wrap{flex-direction:column;gap:14px}
+ .colL,.colR{display:contents}
+ .hd{order:1}.stagebox{order:2}.bar{order:3}#ctl{order:4}#nar{order:5}#extra{order:6}nav{order:7}
+ .row{grid-template-columns:1fr 78px}.row label{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){#nar{animation:none}}
+
+.layout{max-width:1180px;margin:0 auto;padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:32px;align-items:flex-start}
+.side{flex:0 0 340px;min-width:0;display:flex;flex-direction:column;gap:12px;position:sticky;top:14px}
+.main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:30px}
+.main section{display:flex;flex-direction:column;gap:14px}
+.main h2{font-size:21px;line-height:1.4;margin:0;font-weight:600;text-wrap:balance}
+.txt p{margin:0 0 22px;line-height:1.95}
+.txt p:last-child{margin-bottom:0}
+.lead{font-size:18px;line-height:1.9;margin:0}
+.two{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:center}
+.codebox{display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:14px;line-height:1.75;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;white-space:pre}
+.codebox b{font-weight:500}
+.codebox .live{display:block;margin-top:8px;font-family:"IBM Plex Sans Thai",sans-serif;white-space:normal;font-size:15px}
+.sum{border:2px solid var(--accent);border-radius:12px;padding:14px 18px}
+.sum p{margin:0 0 14px;line-height:1.9}
+.hd{align-items:flex-start}
+@media (max-width:900px){.layout{flex-direction:column}.side{position:static;flex:none;width:100%}.two{grid-template-columns:1fr}}
+</style>
+<div class="layout">
+ <div class="side">
+  <div class="hd"><div><div class="kick" id="kick"></div><h1 id="ttl"></h1></div><div class="langs"><button id="lth" type="button" aria-pressed="true">ไทย</button><button id="len" type="button" aria-pressed="false">EN</button></div></div>
+  <div class="bar">
+   <button id="play" type="button"></button>
+   <div class="spd"><label for="spd" id="spdl"></label><input id="spd" type="range" min="0.25" max="3" step="0.05" value="1"><input id="spdn" type="number" min="0.25" max="3" step="0.05" value="1" aria-label="speed"><span id="spdv">1x</span></div>
+  </div>
+  <div id="ctl"></div>
+  <div id="extra"></div>
+ </div>
+ <div class="main">
+  <p class="lead" id="lead"></p>
+  <section><h2 id="h1"></h2><div class="stagebox"><svg id="svgA" class="stg" viewBox="0 0 640 400" tabindex="0" role="img"></svg></div><div class="txt" id="tA"></div></section>
+  <section><h2 id="h2"></h2><div class="two"><div class="stagebox"><svg id="svgB" class="stg" viewBox="0 0 340 300" role="img"></svg></div><div class="codebox" id="code"></div></div><div class="txt" id="tB"></div></section>
+  <section><h2 id="h3"></h2><div class="stagebox"><svg id="svgC" class="stg" viewBox="0 0 640 340" role="img"></svg></div><div class="txt" id="tC"></div></section>
+  <section class="sum" id="sum"></section>
+  <section id="quizbox"></section>
+ </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const N=8;
+const $=id=>document.getElementById(id);
+let LANG='th';try{LANG=localStorage.getItem('tdc-lang')==='en'?'en':'th'}catch(e){}
+const T=(a,b)=>LANG==='en'?b:a;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const tri=p=>p<.5?2*p:2-2*p;
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const f1=x=>(Math.round(x*100)/100);
+
+/* ---------- model: delay chain of 8 taps, tap spacing d ns, CKV period T ns, 50% duty ---------- */
+const bitsAt=(s,Tp)=>{const q=[];for(let k=0;k<N;k++){const m=(((s-k)%Tp)+Tp)%Tp;q.push(m<Tp/2?1:0)}return q};
+function edges(q){let rise=0,fall=8,rf=false,ff=false,prev=q[N-1];
+ for(let i=0;i<N;i++){
+  if(q[i]===1&&prev===0&&!rf){rise=i;rf=true}
+  if(q[i]===0&&prev===1&&!ff){fall=i;ff=true}
+  prev=q[i];
+ }return{rise,fall}}
+const topOut=e=>e.rise>e.fall?e.rise-e.fall:e.fall-e.rise;
+function botOut(e){const fwd=e.rise>=e.fall?e.rise-e.fall:8+e.rise-e.fall;const bwd=8-fwd;return{fwd,bwd,min:Math.min(fwd,bwd)}}
+const cache={};
+function curves(Tp){const k=Tp.toFixed(3);if(cache[k])return cache[k];const a=[];for(let i=0;i<=160;i++){const s=i*Tp/160;const e=edges(bitsAt(s,Tp));a.push([s,topOut(e),botOut(e).min])}return cache[k]=a}
+const S={s:2.2,T:73.74,d:7.4};
+const Dl=new Array(N).fill(0);
+const TPof=()=>clamp(S.T/S.d,6,15);
+function model(){const Tp=TPof(),q=bitsAt(clamp(S.s,0,Tp),Tp),e=edges(q),ones=q.reduce((a,b)=>a+b,0);return{Tp,q,e,ones,top:topOut(e),bot:botOut(e)}}
+
+/* ---------- drawing ---------- */
+const tx=(x,y,s,c,a,ex)=>`<text class="t" x="${f1(x)}" y="${f1(y)}" text-anchor="${a||'middle'}" fill="${c||'var(--ink)'}" ${ex||''}>${s}</text>`;
+const NT='style="stroke:none"';
+
+function drawLadder(m){
+ const X0=100,X1=530,u=(X1-X0)/30,X=t=>X0+t*u,Tp=m.Tp,tref=20+clamp(S.s,0,Tp),xr=X(tref);
+ const cy=k=>52+34*k,fy=cy(7)+44,by=k=>cy(k)-17;
+ let o='';
+ const E0=[];for(let n=-6;n<=6;n++){const t=20+n*Tp;if(t>=-0.01&&t<=30.01)E0.push(t)}
+ for(let i=0;i+1<E0.length;i++)o+=tx(X((E0[i]+E0[i+1])/2),22,i+1,'var(--muted)');
+ for(const t of E0)o+=`<line x1="${f1(X(t))}" y1="32" x2="${f1(X(t))}" y2="${fy+20}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 5" opacity=".75"/>`;
+ o+=`<clipPath id="cb"><rect x="0" y="0" width="${f1(xr)}" height="400"/></clipPath><clipPath id="ca"><rect x="${f1(xr)}" y="0" width="640" height="400"/></clipPath>`;
+ o+=`<circle cx="76" cy="${cy(0)}" r="4.5" fill="var(--blue)"/>`;
+ for(let k=0;k<N;k++){
+  const c=cy(k),hi=c-10,lo=c+10,d=k;
+  let g=tx(6,c+7,k===0?'CKV':k,'var(--muted)','start');
+  if(k>=1){
+   g+=`<line x1="76" y1="${k===1?cy(0):cy(k-1)+11}" x2="76" y2="${c-11}" stroke="var(--blue)" stroke-width="2.5"/>`;
+   g+=`<rect x="62" y="${c-11}" width="28" height="22" rx="4" fill="var(--panel)" stroke="var(--blue)" stroke-width="2.5"/>`+tx(76,c+7,'Δ','var(--blue)','middle',NT);
+   g+=`<line x1="90" y1="${c}" x2="${X0}" y2="${c}" stroke="var(--blue)" stroke-width="2.5"/>`;
+  }else g+=`<line x1="76" y1="${c}" x2="${X0}" y2="${c}" stroke="var(--blue)" stroke-width="2.5"/>`;
+  const lv=t=>((((t-d-20)%Tp)+Tp)%Tp)<Tp/2;
+  const ev=[];for(let n=-8;n<=8;n++){for(const t of [20+d+Tp*n,20+d+Tp*n+Tp/2]){if(t>0.001&&t<29.999)ev.push(t)}}
+  ev.sort((a,b)=>a-b);
+  let cur=lv(0.0001),path=`M${X0} ${cur?hi:lo}`;
+  for(const t of ev){path+=` H${f1(X(t))}`;cur=lv(t+0.0001);path+=` V${cur?hi:lo}`}
+  path+=` H${X1}`;
+  g+=`<path d="${path}" fill="none" stroke="var(--blue)" stroke-width="3" clip-path="url(#cb)"/><path d="${path}" fill="none" stroke="var(--blue)" stroke-width="3" opacity=".3" clip-path="url(#ca)"/>`;
+  g+=`<circle cx="${f1(xr)}" cy="${lv(tref)?hi:lo}" r="6" fill="var(--blue)" stroke="var(--stage)" stroke-width="2"/>`;
+  g+=`<circle cx="554" cy="${c}" r="10" fill="var(--blue)" fill-opacity="${f1(.16+.84*Dl[k])}" stroke="var(--blue)" stroke-width="2"/>`;
+  o+=`<g>${g}</g>`;
+ }
+ o+=tx(6,fy+7,'FREF','var(--muted)','start');
+ o+=`<line x1="${X0}" y1="${fy+10}" x2="${X1}" y2="${fy+10}" stroke="var(--muted)" stroke-width="2" opacity=".5"/><path d="M${f1(xr)} ${fy+10} V${fy-10} H${f1(Math.min(xr+24,X1))} V${fy+10}" fill="none" stroke="var(--ink)" stroke-width="3.5"/>`;
+ o+=`<line x1="${f1(xr)}" y1="32" x2="${f1(xr)}" y2="${fy+24}" stroke="var(--ink)" stroke-width="2.5"/><circle cx="${f1(xr)}" cy="${fy+36}" r="11" fill="var(--ink)" stroke="var(--stage)" stroke-width="2.5"/>`;
+ const yf=by(m.e.fall),yr=by(m.e.rise);
+ const mk=(y,c,l)=>`<path d="M574 ${y} L586 ${y-8} L586 ${y+8} Z" fill="${c}"/>`+tx(598,y+7,l,c);
+ o+=mk(yf,'var(--orange)','f')+mk(yr,'var(--purple)','r');
+ o+=`<path d="M608 ${yf} H614 V${yr} H608" fill="none" stroke="var(--red)" stroke-width="3"/>`+tx(629,(yf+yr)/2+7,m.top,'var(--red)');
+ return o;
+}
+
+function drawRing(m){
+ const cx=170,cy=150,sc=1.05,ro=76,ri=46;
+ const pt=(r,deg)=>{const a=deg*Math.PI/180;return[f1(r*Math.cos(a)),f1(r*Math.sin(a))]};
+ let o='';
+ for(let j=0;j<8;j++){
+  const a0=-90+j*45,a1=a0+45,p1=pt(ro,a0),p2=pt(ro,a1),p3=pt(ri,a1),p4=pt(ri,a0),l=Dl[j];
+  o+=`<path d="M${p1} A${ro} ${ro} 0 0 1 ${p2} L${p3} A${ri} ${ri} 0 0 0 ${p4} Z" fill="var(--blue)" fill-opacity="${f1(.16+.84*l)}" stroke="var(--stage)" stroke-width="3"/>`;
+  const md=pt(61,a0+22.5);o+=tx(md[0],+md[1]+7,j,l>.5?'var(--stage)':'var(--ink)','middle',NT);
+ }
+ const kf=m.e.fall%8,kr=m.e.rise%8;
+ const arc=(R,k,span,dash,op)=>{const a=-90+k*45,b=a+span*45,p=pt(R,a),q=pt(R,b);return `<path d="M${p} A${R} ${R} 0 ${span*45>180?1:0} 1 ${q}" fill="none" stroke="var(--green)" stroke-width="7" ${dash?'stroke-dasharray="7 6"':''} opacity="${op}"/>`};
+ o+=arc(84,kf,m.bot.fwd,false,m.bot.fwd<=m.bot.bwd?1:.4)+arc(84,kr,m.bot.bwd,true,m.bot.bwd<=m.bot.fwd?1:.4);
+ const mk=(k,c,l)=>{const d=pt(98,-90+k*45),t=pt(121,-90+k*45);return `<circle cx="${d[0]}" cy="${d[1]}" r="8" fill="${c}"/>`+tx(+t[0],+t[1]+7,l,c)};
+ o+=mk(kf,'var(--orange)','f')+mk(kr,'var(--purple)','r');
+ o+=tx(0,-2,`fwd ${m.bot.fwd}`,'var(--green)')+tx(0,24,`bwd ${m.bot.bwd}`,'var(--green)');
+ return `<g transform="translate(${cx} ${cy}) scale(${sc})">${o}</g>`;
+}
+
+function drawLock(m){
+ const lt=2*m.top,lb=2*m.bot.min,ok=v=>v<=7?'✓':'✗';
+ return tx(24,34,`${T('ด้านบน','Top')}: half = ${m.top} → trise = ${lt} ${ok(lt)}`,'var(--red)','start')+tx(24,66,`${T('ด้านล่าง','Bottom')}: half = ${m.bot.min} → trise = ${lb} ${ok(lb)}`,'var(--green)','start')+tx(630,34,'trise ≤ 7','var(--muted)','end');
+}
+function drawPlot(m){
+ const x=10,y=84,w=620,h=250;
+ const pL=46,pR=w-10,pT=44,pB=h-38;
+ const Tp=m.Tp,sx=s=>pL+s/Tp*(pR-pL),sy=v=>pB-v/8*(pB-pT);
+ let o='';
+ const leg=(c,t,lx,ly)=>`<line x1="${lx}" y1="${ly-6}" x2="${lx+28}" y2="${ly-6}" stroke="${c}" stroke-width="5"/>`+tx(lx+38,ly,t,c,'start');
+ o+=leg('var(--red)',T('ด้านบน |r − f|','Top |r − f|'),pL,22)+leg('var(--green)',T('ด้านล่าง min(fwd, bwd)','Bottom min(fwd, bwd)'),Math.round(w/2),22);
+ for(const v of [0,4,8]){
+  o+=`<line x1="${pL}" y1="${f1(sy(v))}" x2="${pR}" y2="${f1(sy(v))}" stroke="var(--line)" stroke-width="2" ${v?'stroke-dasharray="4 5"':''}/>`;
+  o+=tx(pL-10,sy(v)+7,v,'var(--muted)','end');
+ }
+ for(const v of [0,Tp/2,Tp])o+=tx(sx(v),h-8,Math.round(v*10)/10,'var(--muted)');
+ o+=tx(sx(Tp*.78),h-8,T('เฟส s','phase s'),'var(--muted)');
+ const cv=curves(Tp);
+ const tp=cv.map(c=>`${f1(sx(c[0]))},${f1(sy(c[1]))}`).join(' '),bp=cv.map(c=>`${f1(sx(c[0]))},${f1(sy(c[2]))}`).join(' ');
+ const rev=cv.slice().reverse().map(c=>`${f1(sx(c[0]))},${f1(sy(c[2]))}`).join(' ');
+ o+=`<polygon points="${tp} ${rev}" fill="var(--red)" opacity=".28"/>`;
+ o+=`<polyline points="${tp}" fill="none" stroke="var(--red)" stroke-width="6" stroke-linejoin="round"/><polyline points="${bp}" fill="none" stroke="var(--green)" stroke-width="3" stroke-linejoin="round"/>`;
+ const cs=sx(clamp(S.s,0,Tp));
+ o+=`<line x1="${f1(cs)}" y1="${pT}" x2="${f1(cs)}" y2="${pB}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 4"/>`;
+ o+=`<circle cx="${f1(cs)}" cy="${f1(sy(m.top))}" r="8" fill="var(--red)" stroke="var(--stage)" stroke-width="2.5"/><circle cx="${f1(cs)}" cy="${f1(sy(m.bot.min))}" r="5.5" fill="var(--green)" stroke="var(--stage)" stroke-width="2.5"/>`;
+ return `<g transform="translate(${x} ${y})">${o}</g>`;
+}
+let M=null;
+function draw(){
+ M=model();
+ $('svgA').innerHTML=drawLadder(M);
+ $('svgB').innerHTML=drawRing(M);
+ $('svgC').innerHTML=drawLock(M)+drawPlot(M);
+}
+
+/* ---------- text ---------- */
+const QZ=[
+{q:['ถ้า 8 tap ครอบคลุมพอดี 1 คาบ (8 × t_inv = T) และ duty 50% โค้ดทั้งสองแบบให้ผลอย่างไร','If the 8 taps cover exactly one period (8 × t_inv = T) at 50% duty, what do the two codes give?'],o:[['ตรงกัน = 4 ทุกเฟส','They agree: 4 at every phase'],['ด้านบนได้ 3 หรือ 5','The top gives 3 or 5'],['ด้านล่างได้ 8','The bottom gives 8'],['ต่างกันทุกเฟส','They differ at every phase']],a:0,e:['สูง 4 ต่ำ 4 พอดี trise กับ tfall ห่างกัน 4 เสมอ','It is always 4 high and 4 low, so trise and tfall are always 4 apart.']},
+{q:['เมื่อ tfall กับ trise ห่างกัน 3 ทางหนึ่งและ 5 อีกทางหนึ่ง โค้ดด้านล่างได้เท่าใด','When tfall and trise are 3 apart one way and 5 the other, what does the bottom code give?'],o:[['3','3'],['5','5'],['4','4'],['8','8']],a:0,e:['min(dist_fwd, dist_bwd) = min(3, 5) = 3 ไม่ว่าจะพบ edge ตัวไหนก่อน','min(dist_fwd, dist_bwd) = min(3, 5) = 3, whichever edge is found first.']},
+{q:['ทำไม half_per = 5 จึงทำให้ phase lock ไม่ได้','Why does half_per = 5 prevent phase lock?'],o:[['ต้องการ trise = 10 แต่ trise สูงสุด 7','It needs trise = 10 but trise is at most 7'],['trise กลายเป็นค่าลบ','trise becomes negative'],['err_by2 เป็น 0 เสมอ','err_by2 is always 0'],['avg_divider ล้น','avg_divider overflows']],a:0,e:['จุดล็อกคือ trise = 2 × half_per = 10 ซึ่งไม่เกิดขึ้น','The lock point is trise = 2 × half_per = 10, which never occurs.']}
+];
+let ans=[null,null,null];
+const CODE=`<b>${'top (bug)'}</b>
+half_per = (trise > tfall) ? trise − tfall
+                           : tfall − trise
+
+<b>bottom</b>
+dist_fwd = (trise >= tfall) ? trise − tfall
+                           : 8 + trise − tfall
+dist_bwd = 8 − dist_fwd
+half_per = (dist_fwd < dist_bwd)
+         ? dist_fwd : dist_bwd`;
+function renderText(){
+ document.documentElement.lang=LANG;
+ $('kick').textContent='ADPLL · TDC';
+ $('ttl').textContent=T('Half period ของ TDC 8 tap','Half period of an 8-tap TDC');
+ $('lead').textContent=T('CKV (duty 50% เสมอ) คาบ 73.74 ns วิ่งผ่านตัวหน่วง 8 ตัว ตัวละ 7.4 ns รวม 59.2 ns ซึ่งเป็นเพียง 80% ของคาบ ครึ่งคาบ 36.87 ns เท่ากับ 4.98 tap หน้าต่าง 8 tap จึงเห็นไม่ครบคาบ บางเฟสของ FREF เห็น 5 สูงกับ 3 ต่ำ แล้วโค้ดด้านบนได้ 5 ส่วนโค้ดด้านล่างได้ 3','CKV (always 50% duty) has a period of 73.74 ns and runs through 8 delay cells of 7.4 ns each, 59.2 ns in total, only 80% of the period. Half a period of 36.87 ns is 4.98 taps, so the 8-tap window does not see a full period. At some FREF phases it sees 5 high and 3 low, and the top code returns 5 while the bottom code returns 3.');
+ $('h1').textContent=T('1. CKV ผ่านตัวหน่วง 8 ตัว แล้ว FREF จับ','1. CKV through 8 delay cells, captured by FREF');
+ $('h2').textContent=T('2. วนรอบ 8 tap: short path กับ long path','2. Around 8 taps: short path and long path');
+ $('h3').textContent=T('3. ผลของสองโค้ดตามเฟส และผลต่อการล็อก','3. Both codes versus phase, and the effect on lock');
+ $('tA').innerHTML=T(`<p>แต่ละแถวคือรูปคลื่นจริงของ CKV ที่ผ่านตัวหน่วง Δ มา k ตัว (1 ตัว = t_inv = 7.4 ns) ทุกแถวสูงครึ่งคาบและต่ำครึ่งคาบ เส้นสีขาวคือขอบ FREF จุดบนแต่ละแถวคือค่าที่ถูกจับ และวงกลมทางขวาสว่างเมื่อจุดอยู่ระดับสูง ลากเส้นสีขาวไปมาได้</p>
+<p>เส้นประแนวตั้งคือขอบขาขึ้นของ CKV ในหน่วย tap คาบคือ T ÷ t_inv = 73.74 ÷ 7.4 ≈ 9.96 tap ซึ่งมากกว่า 8 หน้าต่างจึงเห็นแค่ส่วนหนึ่งของคาบ ลองเปลี่ยน T หรือ t_inv ด้านซ้าย ที่ t_inv = 9.22 ns (8 ตัวรวมเป็น 1 คาบพอดี) จะเห็นสูง 4 ต่ำ 4 เสมอ</p>
+<p>สามเหลี่ยมสีม่วง r (trise) คือรอยต่อแรกที่ค่าเปลี่ยนจากต่ำเป็นสูงเมื่ออ่านจาก tap 0 ลงล่าง สีส้ม f (tfall) คือรอยต่อแรกที่เปลี่ยนจากสูงเป็นต่ำ การหาวนรอบ โดย tap 0 เทียบกับ tap 7 เส้นวงเล็บแดงคือผลต่างของโค้ดด้านบน</p>`,
+`<p>Each row is the real waveform of CKV after k delay cells Δ (one cell = t_inv = 7.4 ns). Every row is high for half a period and low for half a period. The white line is the FREF edge, the dot on each row is the captured value, and the circle on the right is bright when the dot is high. You can drag the white line.</p>
+<p>The dotted vertical lines are CKV rising edges, in tap units. The period is T ÷ t_inv = 73.74 ÷ 7.4 ≈ 9.96 taps, more than 8, so the window sees only part of a period. Try changing T or t_inv on the left. At t_inv = 9.22 ns (8 cells make exactly one period) it is always 4 high and 4 low.</p>
+<p>The purple triangle r (trise) is the first low-to-high change reading from tap 0 downward, the orange triangle f (tfall) the first high-to-low change. The search wraps: tap 0 is compared with tap 7. The red bracket is the top code’s difference.</p>`);
+ $('tB').innerHTML=T(`<p>หลัง tap 7 โค้ดวนกลับ tap 0 จึงมอง 8 tap เป็นวงกลม tfall กับ trise แบ่งวงเป็นสองส่วนที่รวมกันเป็น 8 เสมอ เช่น 3 กับ 5 (short path และ long path) เส้นสีเขียวทึบคือส่วนที่โค้ดด้านล่างเลือก</p>
+<p>โค้ดด้านบนลบกันตรง ๆ จึงได้ส่วนใดส่วนหนึ่งตามลำดับที่พบ edge ซึ่งขึ้นกับเฟสของ FREF โค้ดด้านล่างบวก 8 เมื่อผลต่างติดลบ แล้วเลือก short path เสมอ ในโค้ดด้านบนชื่อ trise กับ tfall สลับกัน แต่ผลต่างสัมบูรณ์ไม่เปลี่ยน</p>`,
+`<p>After tap 7 the code wraps to tap 0, so the 8 taps form a ring. tfall and trise cut it into two parts that always add up to 8, for example 3 and 5 (short path and long path). The solid green arc is the one the bottom code selects.</p>
+<p>The top code subtracts directly, so it returns one of the two parts depending on which edge is found first, which depends on the FREF phase. The bottom code adds 8 when the difference is negative and always picks the short path. In the top code the names trise and tfall are swapped, but the absolute difference is unchanged.</p>`);
+ $('code').innerHTML=CODE+`<span class="live" id="live"></span>`;
+ $('tC').innerHTML=T(`<p>เส้นแดงคือโค้ดด้านบน เส้นเขียวคือโค้ดด้านล่าง พื้นที่แรเงาแดงคือเฟสที่สองค่าต่างกัน ที่ 73.74 ns และ 7.4 ns สองค่าต่างกันประมาณ 59% ของเฟสทั้งหมด (ด้านบนได้ 5 แทน 3)</p>
+<p>ใน adpll_tdc.v ค่า half_per ถูกเฉลี่ย แล้วใช้หา phf_f = 1 − trise ÷ Tv โดย Tv = 2 × half_per จุดล็อกคือ trise = Tv ข้อความด้านบนของภาพคำนวณจากเฟสปัจจุบัน</p>
+<p>half = 3 ต้องการ trise = 6 ซึ่งเกิดขึ้นได้ half = 5 ต้องการ trise = 10 แต่ trise สูงสุดคือ 7 (ไม่มี case) ลูปจึงล็อกไม่ได้ ตามที่สไลด์ของคุณเรียกว่า phase error 180° ตามสูตรเดียวกัน half = 4 ต้องการ trise = 8 ซึ่งเกินช่วงเช่นกัน ผมไม่แน่ใจว่าวงจรจริงจัดการกรณีนี้อย่างไร (เช่นผ่าน phf_i_o = trise ≥ 7)</p>`,
+`<p>The red line is the top code, the green line the bottom code, and the red shaded area is where the two differ. At 73.74 ns and 7.4 ns they differ at about 59% of all phases (the top code returns 5 instead of 3).</p>
+<p>In adpll_tdc.v half_per is averaged and used to form phf_f = 1 − trise ÷ Tv with Tv = 2 × half_per. The lock point is trise = Tv. The text at the top of the picture is computed from the current phase.</p>
+<p>half = 3 needs trise = 6, which can happen. half = 5 needs trise = 10, but trise is at most 7 (no case), so the loop cannot lock. Your slide calls this the 180° phase error. By the same formula half = 4 would need trise = 8, also out of range. I am not sure how the real circuit handles that case (for example through phf_i_o = trise ≥ 7).</p>`);
+ $('sum').innerHTML=T(`<p><b>สรุป:</b> delay chain 8 × 7.4 ns = 59.2 ns ไม่ครอบคลุมคาบ 73.74 ns จึงเห็น 5 สูงกับ 3 ต่ำ ระยะระหว่าง trise กับ tfall มีสองค่าที่รวมกันเป็น 8 (3 กับ 5) โค้ดด้านล่างเลือก short path เสมอ ส่วนโค้ดด้านบนได้ long path (5) ในบางเฟส จนจุดล็อก trise = Tv เกิดขึ้นไม่ได้ ถ้าต้องการให้ครอบคลุม 1 คาบ ต้องมีอย่างน้อย 10 tap (73.74 ÷ 7.4 ≈ 9.96) ตามเกณฑ์ L ≥ max(Tv) ÷ min(t_inv) ในหนังสือหน้า 93</p>
+<p><b>ข้อจำกัด:</b> หนังสือ ADPLL (Eq. 4.29, Appendix C, pf_dec.vhd) มีโค้ดแบบด้านบนแต่ไม่ได้พูดถึง bug นี้โดยตรง บทเรียนนี้สร้างจากโค้ดสองชุด สไลด์ และตัวเลขที่คุณให้มา ผมสมมติว่า 8 เฟสมาจาก delay chain ตัวละ 7.4 ns ถ้าเป็น ring oscillator 8 เฟส ระยะห่างจะเป็น T ÷ 8 = 9.22 ns และสองโค้ดได้ 4 เท่ากัน ไม่มี error เว้นแต่เฟสเยื้องหรือมี jitter เมื่อคาบสั้นกว่า 8 tap หน้าต่างเห็นมากกว่าหนึ่งคาบ ซึ่งไม่ได้ครอบคลุมที่นี่</p>`,
+`<p><b>Summary:</b> A delay chain of 8 × 7.4 ns = 59.2 ns does not cover the 73.74 ns period, so the window sees 5 high and 3 low. The distance between trise and tfall has two values that add up to 8 (3 and 5). The bottom code always picks the short path, while the top code returns the long path (5) at some phases, so the lock point trise = Tv cannot occur. Covering one full period needs at least 10 taps (73.74 ÷ 7.4 ≈ 9.96), following the book’s L ≥ max(Tv) ÷ min(t_inv) on page 93.</p>
+<p><b>Limits:</b> The ADPLL book (Eq. 4.29, Appendix C, pf_dec.vhd) contains the top form but does not discuss this bug directly. This lesson is built from the two code versions, the slide and the numbers you provided. I assume the 8 phases come from a delay chain of 7.4 ns cells. With an 8-phase ring oscillator the spacing would be T ÷ 8 = 9.22 ns and both codes would give 4, with no error unless a phase is skewed or there is jitter. Periods shorter than 8 taps, where the window sees more than one period, are not covered here.</p>`);
+ renderExtra();renderQuiz();
+}
+function renderExtra(){
+ const sw=c=>`<span class="sw" style="background:var(--${c})"></span>`;
+ $('extra').innerHTML=`<p>${sw('blue')}${T('ฟ้า = CKV ที่ผ่านตัวหน่วง (วงกลมสว่าง = ระดับสูง)','Blue = CKV through the delay cells (bright circle = high)')}</p>
+<p>${sw('orange')}${T('ส้ม f = tfall: ตำแหน่งแรกที่ค่าเปลี่ยน 1 เป็น 0','Orange f = tfall: first 1 to 0 change')}</p>
+<p>${sw('purple')}${T('ม่วง r = trise: ตำแหน่งแรกที่ค่าเปลี่ยน 0 เป็น 1','Purple r = trise: first 0 to 1 change')}</p>
+<p>${sw('red')}${T('แดง = ผลของโค้ดด้านบน','Red = result of the top code')}</p>
+<p>${sw('green')}${T('เขียว = ผลของโค้ดด้านล่าง','Green = result of the bottom code')}</p>`;
+}
+function renderQuiz(){
+ let h=`<div class="quiz"><h2>${T('แบบทดสอบ','Quiz')}</h2>`;
+ QZ.forEach((z,i)=>{
+  h+=`<div class="q"><p>${i+1}. ${z.q[LANG==='en'?1:0]}</p><div class="opts">`;
+  z.o.forEach((o,j)=>{const cls=ans[i]===null?'':(j===z.a?'ok':(ans[i]===j?'no':''));h+=`<button type="button" data-q="${i}" data-o="${j}" class="${cls}">${o[LANG==='en'?1:0]}</button>`});
+  h+=`</div>`;
+  if(ans[i]!==null)h+=`<span class="fb">${ans[i]===z.a?T('ถูกต้อง. ','Correct. '):T('ยังไม่ถูก. ','Not quite. ')}${z.e[LANG==='en'?1:0]}</span><button type="button" data-clear="${i}" style="margin-top:6px">${T('ล้างคำตอบข้อนี้','Clear this answer')}</button>`;
+  h+=`</div>`;
+ });
+ const sc=ans.reduce((a,v,i)=>a+(v===QZ[i].a?1:0),0);
+ h+=`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button type="button" data-restart="1">${T('เริ่มใหม่ทั้งหมด','Restart all')}</button><span style="font-size:15px;color:var(--muted)">${T('คะแนน','Score')}: ${sc} / ${QZ.length}</span></div></div>`;
+ $('quizbox').innerHTML=h;
+}
+/* ---------- controls ---------- */
+const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+let speed=1,auto=!RM,clock=0,blend=1,auto0=S.s,tw=null,dragging=false,last=performance.now(),roCache='',liveCache='';
+function setPlay(){const b=$('play');b.textContent=auto?T('หยุดแอนิเมชัน','Pause animation'):T('เล่นแอนิเมชัน','Play animation');b.setAttribute('aria-pressed',auto?'true':'false')}
+function pauseAuto(){if(auto){auto=false;setPlay()}}
+function startAuto(){auto=true;blend=0;auto0=S.s;setPlay()}
+function mountCtl(){
+ $('ctl').innerHTML=`<div class="row"><label for="rs">${T('เฟสของ FREF s (หน่วย tap)','FREF phase s (taps)')}</label><input id="rs" type="range" min="0" max="10" step="0.02"><input id="ns" type="number" min="0" max="15" step="0.05"></div>
+<div class="row"><label for="rT">${T('คาบ CKV, T (ns)','CKV period T (ns)')}</label><input id="rT" type="range" min="60" max="90" step="0.01"><input id="nT" type="number" min="60" max="90" step="0.01"></div>
+<div class="row"><label for="rd">${T('ตัวหน่วง t_inv (ns)','Cell delay t_inv (ns)')}</label><input id="rd" type="range" min="5" max="12" step="0.05"><input id="nd" type="number" min="5" max="12" step="0.05"></div>
+<div class="chips">${T('ตั้งค่าเร็ว','Presets')}: <button type="button" data-d="7.4">${T('ของคุณ','Yours')} 7.4</button><button type="button" data-d="9.2175">9.22 (${T('ครบ 1 คาบ','one period')})</button></div>
+<div class="ro" id="ro"></div>`;
+ const setS=v=>{if(!isFinite(v))return;pauseAuto();S.s=clamp(v,0,TPof());syncCtl()};
+ const setT=v=>{if(!isFinite(v))return;pauseAuto();tw=null;S.T=clamp(v,60,90);syncCtl()};
+ const setD=v=>{if(!isFinite(v))return;pauseAuto();tw=null;S.d=clamp(v,5,12);syncCtl()};
+ $('rs').addEventListener('input',e=>setS(+e.target.value));$('ns').addEventListener('input',e=>setS(+e.target.value));
+ $('rT').addEventListener('input',e=>setT(+e.target.value));$('nT').addEventListener('input',e=>setT(+e.target.value));
+ $('rd').addEventListener('input',e=>setD(+e.target.value));$('nd').addEventListener('input',e=>setD(+e.target.value));
+ $('ctl').querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{pauseAuto();tw={from:S.d,to:+b.dataset.d,p:0}}));
+ roCache='';syncCtl();
+}
+function setVal(id,v){const el=$(id);if(el&&document.activeElement!==el)el.value=v}
+function syncCtl(){
+ const Tp=TPof();if(S.s>Tp)S.s=Tp;
+ for(const id of ['rs']){const el=$(id);if(el)el.max=Tp}
+ setVal('rs',S.s.toFixed(2));setVal('ns',S.s.toFixed(2));setVal('rT',S.T.toFixed(2));setVal('nT',S.T.toFixed(2));setVal('rd',S.d.toFixed(2));setVal('nd',S.d.toFixed(2));
+ const m=model(),e=m.e,cover=8*S.d/S.T*100,html=`<div>T ÷ t_inv = <b>${m.Tp.toFixed(2)}</b> tap · ${T('ครึ่งคาบ','half')} = ${(m.Tp/2).toFixed(2)} tap</div>
+<div>${T('8 tap ครอบคลุม','8 taps cover')} ${(8*S.d).toFixed(1)} ns = ${cover.toFixed(0)}% ${T('ของคาบ','of the period')} (${T('ต้องมี','needs')} ≥ ${Math.ceil(m.Tp-1e-9)} tap)</div>
+<div>f (tfall) = <b class="o">${e.fall}</b>, r (trise) = <b class="p">${e.rise}</b> · ${T('สว่าง','high')} ${m.ones} / 8</div>
+<div class="rd">${T('ด้านบน','Top')}: |r − f| = <b>${m.top}</b></div>
+<div class="gr">${T('ด้านล่าง','Bottom')}: fwd = ${m.bot.fwd}, bwd = ${m.bot.bwd}, min = <b>${m.bot.min}</b></div>
+<div>${T('จุดล็อก trise = Tv = 2 × half','Lock point trise = Tv = 2 × half')}: <span class="rd">${2*m.top} ${2*m.top<=7?'✓':'✗'}</span> / <span class="gr">${2*m.bot.min} ${2*m.bot.min<=7?'✓':'✗'}</span></div>
+<div>${m.top===m.bot.min?T('สองโค้ดให้ค่าตรงกัน','Both codes agree'):T('สองโค้ดให้ค่าต่างกัน','The codes disagree')}</div>`;
+ if(html!==roCache){roCache=html;const r=$('ro');if(r)r.innerHTML=html}
+ const live=T(`ตอนนี้ trise = ${e.rise}, tfall = ${e.fall} → ด้านบน ${m.top}, ด้านล่าง ${m.bot.min}`,`Now trise = ${e.rise}, tfall = ${e.fall} → top ${m.top}, bottom ${m.bot.min}`);
+ if(live!==liveCache){liveCache=live;const l=$('live');if(l)l.textContent=live}
+}
+function setSpeed(v){if(!isFinite(v))return;speed=clamp(v,.25,3);if(document.activeElement!==$('spd'))$('spd').value=speed;if(document.activeElement!==$('spdn'))$('spdn').value=speed;$('spdv').textContent=(Math.round(speed*100)/100)+'x'}
+function setLang(l){LANG=l;try{localStorage.setItem('tdc-lang',l)}catch(e){}$('lth').setAttribute('aria-pressed',l==='th');$('len').setAttribute('aria-pressed',l==='en');$('spdl').textContent=T('ความเร็ว','Speed');['svgA','svgB','svgC'].forEach((id,i)=>$(id).setAttribute('aria-label',[T('รูปคลื่น 8 เฟสและการจับด้วย FREF','8 phase waveforms captured by FREF'),T('วงกลม 8 เฟส','Ring of 8 phases'),T('กราฟผลของสองโค้ด','Plot of both codes')][i]));setPlay();renderText();mountCtl()}
+$('lth').addEventListener('click',()=>setLang('th'));$('len').addEventListener('click',()=>setLang('en'));
+$('play').addEventListener('click',()=>{if(auto){auto=false;setPlay()}else startAuto()});
+$('spd').addEventListener('input',e=>setSpeed(+e.target.value));$('spdn').addEventListener('input',e=>setSpeed(+e.target.value));
+$('quizbox').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.q!==undefined)ans[+b.dataset.q]=+b.dataset.o;
+ else if(b.dataset.clear!==undefined)ans[+b.dataset.clear]=null;
+ else if(b.dataset.restart!==undefined)ans=[null,null,null];else return;
+ renderQuiz();
+});
+const st=$('svgA');
+function svgX(e){const r=st.getBoundingClientRect();return (e.clientX-r.left)/r.width*640}
+function dragTo(e){pauseAuto();S.s=clamp((svgX(e)-100)/(430/30)-20,0,TPof());syncCtl()}
+st.addEventListener('pointerdown',e=>{dragging=true;st.setPointerCapture(e.pointerId);dragTo(e);e.preventDefault()});
+st.addEventListener('pointermove',e=>{if(dragging)dragTo(e)});
+const endDrag=()=>{dragging=false};st.addEventListener('pointerup',endDrag);st.addEventListener('pointercancel',endDrag);
+st.addEventListener('keydown',e=>{
+ if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+ const dir=e.key==='ArrowRight'?1:-1;pauseAuto();e.preventDefault();
+ if(e.shiftKey){const Tp=TPof(),pts=[0,Tp/2,Tp];let best=null;if(dir>0){for(const p of pts)if(p>S.s+.01){best=p;break}if(best===null)best=0}else{for(const p of pts.slice().reverse())if(p<S.s-.01){best=p;break}if(best===null)best=Tp}S.s=best}
+ else S.s=clamp(S.s+dir*.5,0,TPof());
+ syncCtl();
+});
+/* ---------- loop ---------- */
+function frame(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(tw){tw.p+=dt*speed*1000/650;if(tw.p>=1){S.d=tw.to;tw=null}else S.d=lerp(tw.from,tw.to,ease(tw.p))}
+ if(auto){clock+=dt*speed;blend=Math.min(1,blend+dt*speed/.7);const ph=(clock%10)/10;S.s=lerp(auto0,TPof()*tri(ph),ease(blend))}
+ if(auto||tw)syncCtl();
+ const m=model();for(let k=0;k<N;k++)Dl[k]=dragging?m.q[k]:Dl[k]+(m.q[k]-Dl[k])*Math.min(1,dt*14);
+ draw();requestAnimationFrame(frame);
+}
+window.__tdc={S,T,model,draw,setLang,pause:()=>{auto=false;setPlay()},settle:()=>{tw=null;const m=model();for(let k=0;k<N;k++)Dl[k]=m.q[k];syncCtl();draw()},edges,bitsAt,topOut,botOut};
+setLang(LANG);setSpeed(1);requestAnimationFrame(frame);
+})();
+
+</script>
+
+</body></html>
